@@ -5,8 +5,10 @@ find_package(PkgConfig REQUIRED)
 PKG_CHECK_MODULES(GTK2 REQUIRED gtk+-2.0)
 include_directories( ${GTK2_INCLUDE_DIRS} )
 link_directories( ${GTK2_LIBRARY_DIRS} )
+file(GLOB all_SRC "${PROJECT_SOURCE_DIR}/src/*.c")
+include_directories( src )
 #-----------compilation step
-add_executable( imaProjet.exe main.c compute.c )
+add_executable( imaProjet.exe ${all_SRC} )
 #-----------linking step
 target_link_libraries( imaProjet.exe ${GTK2_LIBRARIES} )
 
