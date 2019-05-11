@@ -19,8 +19,8 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
   if (classSelection == NULL || pixels == NULL)
     return;
 
-  for (unsigned long k = 0; k < nbTotalPixels; ++k) {
-    pixels[k] = getNeighborsList((void*)pucImaRes, k, NbLine, NbCol);
+  for (int k = 0; k < nbTotalPixels; ++k) {
+    pixels[k] = getNeighborList((void*)pucImaRes, k, NbLine, NbCol);
   }
   unsigned char cloudCenter[5] = {250, 250, 250, 250, 250}; //step 2
   unsigned char groundCenter[5] = {240, 240, 240, 240, 240};
@@ -28,8 +28,8 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
 
   char isChanged = 1;
   while (isChanged) {
+    nbClouds = 0;
     for(unsigned long index = 0; index < nbTotalPixels; ++index) { //step 3
-      nbClouds = 0;
       unsigned long diffCloud = 0;
       unsigned long diffGround = 0;
       for (int i = 0; i < 5; i++) {
@@ -53,7 +53,7 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
         tmp = tmpGroundCenter;
 
       for (unsigned k = 0; k < 5; ++k) 
-        tmp[k] = pixels[i][k];
+        tmp[k] += pixels[i][k];
     }
 
     if (nbClouds == 0 || nbClouds == nbTotalPixels)
@@ -79,7 +79,7 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
     }
   }
   printf("j aime les bananes\n");
-  float f = cloudCenter / nbTotalPixels;
+  float f = nbClouds / nbTotalPixels;
   printf("le pourcentage de nuages est : %f\n", f);
 }
 
