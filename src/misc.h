@@ -6,3 +6,6 @@ struct packedPixel{
 
 unsigned char*
 getNeighborList(struct packedPixel* tab, int index, int height, int width);
+
+
+unsigned long getMediane(unsigned long *tab);

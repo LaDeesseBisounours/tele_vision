@@ -36,4 +36,18 @@ getNeighborList(struct packedPixel* tab, int index, int height, int width) {
   return res;
 }
 
-
+unsigned long getMediane(unsigned long *tab) {
+  for (int i = 0; i < 5; i++) {
+    int greater = 0;
+    int smaller = 0;
+    unsigned long tmp = tab[i];
+    for (int j = 0; j < 5; j++) {
+      if (tmp > tab[j])
+        greater++;
+      if (tmp < tab[j])
+        smaller++;
+    }
+    if (greater <= 2 && smaller <= 2)
+      return tmp;
+  }
+}
