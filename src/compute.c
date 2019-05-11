@@ -3,6 +3,86 @@
 #include "misc.h"
 #include <string.h>
 
+
+unsigned long
+square(unsigned long n) {
+  return n * n;
+}
+
+void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
+#define CLOUD_CLASS 1
+#define GROUND_CLASS 2
+  unsigned long nbTotalPixels = (unsigned long)NbLine * NbCol;
+  char *classSelection = calloc(nbTotalPixels, sizeof(char));
+  unsigned char** pixels = calloc(nbTotalPixels, sizeof(char *));
+
+  if (classSelection == NULL || pixels == NULL)
+    return;
+
+  for (unsigned long k = 0; k < nbTotalPixels; ++k) {
+    pixels[k] = getNeighborsList((void*)pucImaRes, k, NbLine, NbCol);
+  }
+  unsigned char cloudCenter[5] = {250, 250, 250, 250, 250}; //step 2
+  unsigned char groundCenter[5] = {240, 240, 240, 240, 240};
+  unsigned long nbClouds = 0;
+
+  char isChanged = 1;
+  while (isChanged) {
+    for(unsigned long index = 0; index < nbTotalPixels; ++index) { //step 3
+      nbClouds = 0;
+      unsigned long diffCloud = 0;
+      unsigned long diffGround = 0;
+      for (int i = 0; i < 5; i++) {
+        diffCloud +=  square((unsigned long)pixels[index][i] - cloudCenter[i]);
+        diffGround += square((unsigned long)pixels[index][i] - groundCenter[i]);
+      }
+
+      if (diffCloud < diffGround) {
+        nbClouds++;
+        classSelection[index] = CLOUD_CLASS;
+      } else
+        classSelection[index] = GROUND_CLASS;
+    }
+    unsigned long tmpCloudCenter[5] = {0,0,0,0,0};   // step 4
+    unsigned long tmpGroundCenter[5] = {0,0,0,0,0};   // step 4
+    for (unsigned long i = 0; i < nbTotalPixels; i++) {
+      unsigned long *tmp;
+      if (classSelection[i] == CLOUD_CLASS)
+        tmp = tmpCloudCenter;
+      else
+        tmp = tmpGroundCenter;
+
+      for (unsigned k = 0; k < 5; ++k) 
+        tmp[k] = pixels[i][k];
+    }
+
+    if (nbClouds == 0 || nbClouds == nbTotalPixels)
+      return;
+
+    for (unsigned k = 0; k < 5; ++k) {
+      tmpCloudCenter[k] /= nbClouds;
+      tmpGroundCenter[k] /= nbTotalPixels - nbClouds;
+    }
+
+    unsigned long med = getMediane(tmpCloudCenter);
+    for (unsigned k = 0; k < 5; ++k)
+      tmpCloudCenter[k] = med;
+
+    isChanged = 0;
+    for (unsigned k = 0; k < 5 && !isChanged; ++k) {
+      if (tmpCloudCenter[k] != cloudCenter[k]
+          || tmpGroundCenter[k] != groundCenter[k]) {
+        isChanged++;
+        memcpy(groundCenter, tmpGroundCenter, sizeof(groundCenter));
+        memcpy(cloudCenter, tmpCloudCenter, sizeof(groundCenter));
+      }
+    }
+  }
+  printf("j aime les bananes\n");
+  float f = cloudCenter / nbTotalPixels;
+  printf("le pourcentage de nuages est : %f\n", f);
+}
+
 /*******************************************************
 IL EST FORMELLEMENT INTERDIT DE CHANGER LE PROTOTYPE
 DES FONCTIONS
@@ -58,78 +138,5 @@ void ComputeImage(guchar *pucImaOrig,
       *(pucImaRes+iNumPix+iNumChannel)= ucMeanPix;
   }
   analyse(pucImaRes, NbLine, NbCol);
-}
-
-
-unsigned long
-square(unsigned long n) {
-  return n * n;
-}
-
-void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
-#define CLOUD_CLASS 1
-#define GROUND_CLASS 2
-  unsigned long nbTotalPixels = (unsigned long)NbLine * NbCol;
-  char *classSelection = calloc(nbTotalPixels, sizeof(char));
-  unsigned char** pixels = calloc(nbTotalPixels, sizeof(char *));
-
-  if (classSelection == NULL || pixels == NULL)
-    return;
-
-  for (unsigned long k = 0; k < nbTotalPixels; ++k) {
-    pixels[k] = getNeighborsList((void*)pucImaRes, k, NbLine, NbCol);
-  }
-  unsigned char cloudCenter[5] = {250, 250, 250, 250, 250}; //step 2
-  unsigned char groundCenter[5] = {240, 240, 240, 240, 240};
-
-  char isChanged = 1;
-  while (isChanged) {
-    unsigned long nbClouds = 0;
-    for(unsigned long index = 0; index < nbTotalPixels; ++index) { //step 3
-      nbClouds = 0;
-      unsigned long diffCloud = 0;
-      unsigned long diffGround = 0;
-      for (int i = 0; i < 5; i++) {
-        diffCloud +=  square((unsigned long)pixels[index][i] - cloudCenter[i]);
-        diffGround += square((unsigned long)pixels[index][i] - groundCenter[i]);
-      }
-
-      if (diffCloud < diffGround) {
-        nbClouds++;
-        classSelection[index] = CLOUD_CLASS;
-      } else
-        classSelection[index] = GROUND_CLASS;
-    }
-    unsigned long tmpCloudCenter[5] = {0,0,0,0,0};   // step 4
-    unsigned long tmpGroundCenter[5] = {0,0,0,0,0};   // step 4
-    for (unsigned long i = 0; i < nbTotalPixels; i++) {
-      unsigned long *tmp;
-      if (classSelection[i] == CLOUD_CLASS)
-        tmp = tmpCloudCenter;
-      else
-        tmp = tmpGroundCenter;
-
-      for (unsigned k = 0; k < 5; ++k) 
-        tmp[k] = pixels[i][k];
-    }
-
-    if (nbClouds == 0 || nbClouds == nbTotalPixels)
-      return;
-
-    for (unsigned k = 0; k < 5; ++k) {
-      tmpCloudCenter[k] /= nbClouds;
-      tmpGroundCenter[k] /= nbTotalPixels - nbClouds;
-    }
-
-    isChanged = 0;
-    for (unsigned k = 0; k < 5 && !isChanged; ++k) {
-      if (tmpCloudCenter[k] != cloudCenter[k]
-          || tmpGroundCenter[k] != groundCenter[k]) {
-        isChanged++;
-        memcpy(groundCenter, tmpGroundCenter, sizeof(groundCenter));
-        memcpy(cloudCenter, tmpCloudCenter, sizeof(groundCenter));
-      }
-    }
-  }
 }
 
