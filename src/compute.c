@@ -58,3 +58,41 @@ void ComputeImage(guchar *pucImaOrig,
   }
 }
 
+void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
+    guchar *cloudClass = calloc(NbLine * NbCol, sizeof(guchar));
+    int cloudClassLength = 0;
+
+    guchar *groundClass = calloc(NbLine * NbCol, sizeof(guchar));
+    int groundClassLength = 0;
+
+    unsigned char cloudCenter[5] = {250, 250, 250, 250, 250};
+    unsigned char groundCenter[5] = {240, 240, 240, 240, 240};
+
+    char isChanged = 1;
+    while (isChanged) {
+        for(int iNumPix = 0; iNumPix < iNbPixelsTotal * iNbChannels; iNumPix = iNumPix + iNbChannels) {
+            unsigned char *pixel = getNeighborsList((void *)pucImaRes, iNumPix, NbLine, NbCol);
+            unsigned diffCloud = 0;
+            for (int i = 0; i < 5; i++)
+                diffCloud += (pixel[i] - cloudCenter[i]) * (pixel[i] - cloudCenter[i]);
+            unsigned diffGround = 0;
+            for (int i = 0; i < 5; i++)
+                diffGround += (pixel[i] - groundCenter[i]) * (pixel[i] - groundCenter[i]);
+            if (diffCloud < diffGround)
+              cloudClass[cloudClassLength++] = pixel;
+            else
+              groundClass[groundClassLength++] = pixel;
+        }
+        unsigned tmpcloudCenter[5] = {0,0,0,0,0};
+        for (int i = 0; i < cloudClassLength; i++)
+        {
+            tmpcloudCenter[0] += cloudClass[i][0];
+            tmpcloudCenter[1] += cloudClass[i][1];
+            tmpcloudCenter[2] += cloudClass[i][2];
+            tmpcloudCenter[3] += cloudClass[i][3];
+            tmpcloudCenter[4] += cloudClass[i][4];
+        }
+        
+    }
+}
+
