@@ -3,15 +3,39 @@
 #include "misc.h"
 #include <string.h>
 
+#define DEBUG_MODE
+#define NB_CENTER 5
+#define CLOUD_CENTER_INDEX 0
 
 unsigned long
 square(unsigned long n) {
   return n * n;
 }
+#ifdef DEBUG_MODE
+#endif
+
+unsigned minDiff(struct gravityCenter centers[]){
+  unsigned min = 0;
+  for (unsigned k = 1; k < NB_CENTER; ++k) {
+    if (centers[min].diff > centers[k].diff)
+      min = k;
+  }
+  return min;
+}
+
+void printCenters(struct gravityCenter centers[]) {
+  for (unsigned k = 0; k < NB_CENTER; k++) {
+    printf("center %u : { ", k);
+    for (int j = 0; j < 5; j++) {
+      printf("%zu, ", centers[k].curr[j]);
+    }
+    printf("}\n");
+  }
+}
 
 void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
-#define CLOUD_CLASS 1
-#define GROUND_CLASS 2
+
+  printf("starting analyse\n");
   unsigned long nbTotalPixels = (unsigned long)NbLine * NbCol;
   char *classSelection = calloc(nbTotalPixels, sizeof(char));
   unsigned char** pixels = calloc(nbTotalPixels, sizeof(char *));
@@ -22,64 +46,90 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
   for (int k = 0; k < nbTotalPixels; ++k) {
     pixels[k] = getNeighborList((void*)pucImaRes, k, NbLine, NbCol);
   }
-  unsigned char cloudCenter[5] = {250, 250, 250, 250, 250}; //step 2
-  unsigned char groundCenter[5] = {240, 240, 240, 240, 240};
-  unsigned long nbClouds = 0;
 
-  char isChanged = 1;
-  while (isChanged) {
-    nbClouds = 0;
-    for(unsigned long index = 0; index < nbTotalPixels; ++index) { //step 3
-      unsigned long diffCloud = 0;
-      unsigned long diffGround = 0;
-      for (int i = 0; i < 5; i++) {
-        diffCloud +=  square((unsigned long)pixels[index][i] - cloudCenter[i]);
-        diffGround += square((unsigned long)pixels[index][i] - groundCenter[i]);
-      }
+  struct gravityCenter centers[NB_CENTER]; //step 2
+  for (unsigned k = 0; k < 5; ++k)
+    centers[CLOUD_CENTER_INDEX].curr[k] = 250;
 
-      if (diffCloud < diffGround) {
-        nbClouds++;
-        classSelection[index] = CLOUD_CLASS;
-      } else
-        classSelection[index] = GROUND_CLASS;
-    }
-    unsigned long tmpCloudCenter[5] = {0,0,0,0,0};   // step 4
-    unsigned long tmpGroundCenter[5] = {0,0,0,0,0};   // step 4
-    for (unsigned long i = 0; i < nbTotalPixels; i++) {
-      unsigned long *tmp;
-      if (classSelection[i] == CLOUD_CLASS)
-        tmp = tmpCloudCenter;
-      else
-        tmp = tmpGroundCenter;
+  unsigned maxGround = 240;
+  unsigned diff = maxGround / (NB_CENTER - 1);
 
-      for (unsigned k = 0; k < 5; ++k) 
-        tmp[k] += pixels[i][k];
-    }
-
-    if (nbClouds == 0 || nbClouds == nbTotalPixels)
-      return;
-
-    for (unsigned k = 0; k < 5; ++k) {
-      tmpCloudCenter[k] /= nbClouds;
-      tmpGroundCenter[k] /= nbTotalPixels - nbClouds;
-    }
-
-    unsigned long med = getMediane(tmpCloudCenter);
-    for (unsigned k = 0; k < 5; ++k)
-      tmpCloudCenter[k] = med;
-
-    isChanged = 0;
-    for (unsigned k = 0; k < 5 && !isChanged; ++k) {
-      if (tmpCloudCenter[k] != cloudCenter[k]
-          || tmpGroundCenter[k] != groundCenter[k]) {
-        isChanged++;
-        memcpy(groundCenter, tmpGroundCenter, sizeof(groundCenter));
-        memcpy(cloudCenter, tmpCloudCenter, sizeof(groundCenter));
-      }
-    }
+  for (unsigned k = 0; k < NB_CENTER; ++k) {
+    if (k == CLOUD_CENTER_INDEX)
+      continue;
+    for (unsigned j = 0; j < 5; ++j) 
+      centers[k].curr[j] = maxGround;
+    maxGround -= diff;
   }
-  printf("j aime les bananes\n");
-  float f = nbClouds / nbTotalPixels;
+
+#ifdef DEBUG_MODE
+  printCenters(centers);
+#endif
+
+  char centersChanged = 1;
+#ifdef DEBUG_MODE
+  unsigned long nbLoop = 0;
+#endif
+  while (centersChanged) {
+#ifdef DEBUG_MODE
+    nbLoop++;
+    printf("loop nb %zu\n", nbLoop);
+#endif
+    for (unsigned k = 0; k < NB_CENTER; ++k)
+      centers[k].nb = 0;
+    for(unsigned long index = 0; index < nbTotalPixels; ++index) { //step 3
+      for (unsigned k = 0; k < NB_CENTER; ++k) {
+        centers[k].diff = 0;
+        for (int i = 0; i < 5; i++) {
+          centers[k].diff +=
+            square((unsigned long)pixels[index][i] - centers[k].curr[i]);
+        }
+      }
+      unsigned classIndex = minDiff(centers);
+      centers[classIndex].nb++;
+      classSelection[index] = classIndex;
+    }
+    //step 4
+    for (unsigned k = 0; k < NB_CENTER; ++k)
+      memset(&centers[k].tmp, 0, 5 * sizeof(unsigned long));
+    for (unsigned long i = 0; i < nbTotalPixels; i++) {
+      for (unsigned k = 0; k < 5; ++k)
+        centers[classSelection[i]].tmp[k] += pixels[i][k];
+    }
+
+    for (unsigned k = 0; k < NB_CENTER; ++k) {
+      for (unsigned j = 0; j < 5; ++j)
+        centers[k].tmp[j] /= centers[k].nb;
+    }
+
+    unsigned long med = getMediane(centers[CLOUD_CENTER_INDEX].tmp);
+    for (unsigned k = 0; k < 5; ++k)
+      centers[CLOUD_CENTER_INDEX].tmp[k] = med;
+
+
+    centersChanged = 0;
+
+    for (int k = 0; !centersChanged && k < NB_CENTER; k++) {
+      for (int j = 0; j < 5; j++) {
+        if (centers[k].curr[j] != centers[k].tmp[j]) {
+          centersChanged++;
+          break;
+        }
+      }
+    }
+
+
+    for (int k = 0; k < NB_CENTER; k++) {
+      for (int j = 0; j < 5; j++) {
+        centers[k].curr[j] = (char)centers[k].tmp[j];
+      }
+    }
+#ifdef DEBUG_MODE
+    printCenters(centers);
+#endif
+  }
+  printf("number cloud %zu on %zu\n", centers[CLOUD_CENTER_INDEX].nb, nbTotalPixels);
+  float f = (float)centers[CLOUD_CENTER_INDEX].nb / (float)nbTotalPixels;
   printf("le pourcentage de nuages est : %f\n", f);
 }
 

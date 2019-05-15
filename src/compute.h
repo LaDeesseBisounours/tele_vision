@@ -3,6 +3,7 @@
 
 #define LargeurImage 360
 
+
 void ComputeImage(guchar *pucImaOrig, 
 		  guint uiNbCol, 
 		  guint uiNbLine,

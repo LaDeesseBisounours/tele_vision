@@ -7,5 +7,11 @@ struct packedPixel{
 unsigned char*
 getNeighborList(struct packedPixel* tab, int index, int height, int width);
 
+struct gravityCenter {
+  unsigned char curr[5]; //current valu
+  unsigned long tmp[5];  //used to compute the new center
+  unsigned long nb;      //number of pixels corresponding
+  unsigned long diff;
+};
 
 unsigned long getMediane(unsigned long *tab);
