@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 #include "misc.h"
+#include <time.h>
 #include <string.h>
 
 #define DEBUG_MODE
@@ -34,7 +35,7 @@ void printCenters(struct gravityCenter centers[]) {
 }
 
 void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
-
+  clock_t t1 = clock();
   printf("starting analyse\n");
   unsigned long nbTotalPixels = (unsigned long)NbLine * NbCol;
   char *classSelection = calloc(nbTotalPixels, sizeof(char));
@@ -51,7 +52,7 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
   for (unsigned k = 0; k < 5; ++k)
     centers[CLOUD_CENTER_INDEX].curr[k] = 250;
 
-  unsigned maxGround = 240;
+  unsigned maxGround = 200;
   unsigned diff = maxGround / (NB_CENTER - 1);
 
   for (unsigned k = 0; k < NB_CENTER; ++k) {
@@ -141,8 +142,8 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
   printf("number cloud %zu on %zu\n", centers[CLOUD_CENTER_INDEX].nb, nbTotalPixels);
   float f = (float)centers[CLOUD_CENTER_INDEX].nb / (float)nbTotalPixels;
   float f2 = (float)(centers[1].nb + centers[CLOUD_CENTER_INDEX].nb) / (float)nbTotalPixels;
-  printf("le pourcentage de nuages est : %f\n", f);
-  printf("le pourcentage de nuages est : %f\n", f2);
+  printf("le pourcentage de nuages est : %f\n", f * 100);
+  printf("le pourcentage de nuages est : %f\n", f2 * 100);
 
 #ifdef DEBUG_MODE
   for (unsigned i = 0; i < nbTotalPixels; i++) {
@@ -160,6 +161,9 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
 #endif
   free(pixels);
   free(classSelection);
+  clock_t t2 = clock();
+  double duration = 1000 * (t2 - t1);
+  printf("duration : %.2f ms\n", duration / CLOCKS_PER_SEC);
 }
 
 /*******************************************************
