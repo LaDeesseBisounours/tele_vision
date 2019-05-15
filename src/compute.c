@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define DEBUG_MODE
-#define NB_CENTER 10
+#define NB_CENTER 6
 #define CLOUD_CENTER_INDEX 0
 
 unsigned long
@@ -109,8 +109,11 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
     }
 
     unsigned long med = getMediane(centers[CLOUD_CENTER_INDEX].tmp);
+    if (centers[CLOUD_CENTER_INDEX].curr[0] - med > 50)
+      med = centers[CLOUD_CENTER_INDEX].curr[0];
     for (unsigned k = 0; k < 5; ++k)
       centers[CLOUD_CENTER_INDEX].tmp[k] = med;
+
 
 
     centersChanged = 0;
@@ -134,9 +137,12 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
     printCenters(centers);
 #endif
   }
+  printf("number ground1 %zu on %zu\n", centers[1].nb, nbTotalPixels);
   printf("number cloud %zu on %zu\n", centers[CLOUD_CENTER_INDEX].nb, nbTotalPixels);
   float f = (float)centers[CLOUD_CENTER_INDEX].nb / (float)nbTotalPixels;
+  float f2 = (float)(centers[1].nb + centers[CLOUD_CENTER_INDEX].nb) / (float)nbTotalPixels;
   printf("le pourcentage de nuages est : %f\n", f);
+  printf("le pourcentage de nuages est : %f\n", f2);
 
 #ifdef DEBUG_MODE
   for (unsigned i = 0; i < nbTotalPixels; i++) {
@@ -152,6 +158,8 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
     }
   }
 #endif
+  free(pixels);
+  free(classSelection);
 }
 
 /*******************************************************
