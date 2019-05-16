@@ -51,3 +51,29 @@ unsigned long getMediane(unsigned long *tab) {
       return tmp;
   }
 }
+
+DIR *d = NULL;
+struct dirent *dir = NULL;
+char *listPictures() {
+  if (!d) {
+    d = opendir(".");
+    if (!d)
+      printf("error\n");
+  }
+  if ((dir = readdir(d)) != NULL) {
+      char *tmp = dir->d_name;
+      size_t size = strlen(dir->d_name);
+      printf("%s %zu\n", tmp, size);
+      char *new = calloc(1, size + 1);
+      strncpy(new, tmp, strlen(tmp));
+
+      if (size > 4 && !strncmp(new + size - 4, ".bmp", 4))
+        return new;
+      free(new);
+      return listPictures();
+  }
+  else {
+    closedir(d);
+    return NULL;
+  }
+}
