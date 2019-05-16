@@ -142,8 +142,8 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
   printf("number cloud %zu on %zu\n", centers[CLOUD_CENTER_INDEX].nb, nbTotalPixels);
   float f = (float)centers[CLOUD_CENTER_INDEX].nb / (float)nbTotalPixels;
   float f2 = (float)(centers[1].nb + centers[CLOUD_CENTER_INDEX].nb) / (float)nbTotalPixels;
-  printf("le pourcentage de nuages est : %f\n", f * 100);
-  printf("le pourcentage de nuages est : %f\n", f2 * 100);
+  printf("le pourcentage de nuages est : %f%%\n", f * 100);
+  printf("le pourcentage de nuages est : %f%%\n", f2 * 100);
 
 #ifdef DEBUG_MODE
   for (unsigned i = 0; i < nbTotalPixels; i++) {
