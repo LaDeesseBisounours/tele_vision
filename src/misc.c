@@ -63,7 +63,6 @@ char *listPictures() {
   if ((dir = readdir(d)) != NULL) {
       char *tmp = dir->d_name;
       size_t size = strlen(dir->d_name);
-      printf("%s %zu\n", tmp, size);
       char *new = calloc(1, size + 1);
       strncpy(new, tmp, strlen(tmp));
 

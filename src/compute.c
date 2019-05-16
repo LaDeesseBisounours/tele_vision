@@ -4,7 +4,6 @@
 #include <time.h>
 #include <string.h>
 
-#define DEBUG_MODE
 #define NB_CENTER 6
 #define CLOUD_CENTER_INDEX 0
 

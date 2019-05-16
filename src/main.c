@@ -3,6 +3,7 @@
 #include <gtk/gtk.h>
 #include <math.h>
 #include "compute.h"
+#define DEBUG_MODE
 
 /*---------------------------------------
   Proto: 

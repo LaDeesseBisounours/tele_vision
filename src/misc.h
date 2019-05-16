@@ -1,3 +1,6 @@
+#include <dirent.h>
+#include <string.h>
+
 struct packedPixel{
   unsigned char a1;
   unsigned char a2;
@@ -15,3 +18,6 @@ struct gravityCenter {
 };
 
 unsigned long getMediane(unsigned long *tab);
+
+
+char *listPictures();
