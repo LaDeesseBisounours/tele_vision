@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
 #include "compute.h"
 
@@ -11,22 +12,21 @@ int main(void) {
   guchar *pucImaOrig, *pucImaRes;
   GdkPixbuf *pGdkPixbufIma;
 
-  pfsOpenFile = GTK_FILE_SELECTION(*(ppwTabArgs));
-  if (pfsOpenFile == NULL){
-    printf("Mauvaise initialisation du GtkFileSection.\n");
-    exit(0);
-  }
+  gchar *pcFileName = "../../IMAGES/20342579204091110141x.bmp";
   /* chargement en memoire de l'image */
-  pGdkPixbufImaIn = gdk_pixbuf_new_from_file (pcFileName,NULL);
+  pGdkPixbufIma = gdk_pixbuf_new_from_file (pcFileName, NULL);
+
   /* echec du chargement de l'image en memoire */
-  if (pGdkPixbufImaIn == NULL){
+  if (pGdkPixbufIma == NULL){
     printf("Impossible de charger le fichier %s\n", pcFileName);
     exit(0);
   }
 
-  gchar *pcFileName;
-  pcFileName = (gchar*) gtk_file_selection_get_filename(pfsOpenFile);
-  NbCol=gdk_pixbuf_get_width(pGdkPixbufImaOrig); 
-  NbLine=gdk_pixbuf_get_height(pGdkPixbufImaOrig);
-
+  //pcFileName = (gchar*) gtk_file_selection_get_filename(pfsOpenFile);
+  NbCol = gdk_pixbuf_get_width(pGdkPixbufIma); 
+  NbLine = gdk_pixbuf_get_height(pGdkPixbufIma);
+  pucImaOrig = gdk_pixbuf_get_pixels(pGdkPixbufIma);
+  /* recuperation du tableau des pixels de l'image resultat */
+  pucImaRes = gdk_pixbuf_get_pixels(pGdkPixbufIma);
+  ComputeImage(pucImaOrig, NbLine, NbCol, pucImaRes);
 }
