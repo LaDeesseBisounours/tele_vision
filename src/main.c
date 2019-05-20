@@ -3,6 +3,7 @@
 #include <gtk/gtk.h>
 #include <math.h>
 #include "compute.h"
+#include "misc.h"
 #define DEBUG_MODE
 
 /*---------------------------------------
@@ -139,6 +140,7 @@ fonction principale
 ************************************************/
 int main (int argc, char **argv)
 {
+  visualMode = 1;
 
   /*---------------------------------------------
     Declarations

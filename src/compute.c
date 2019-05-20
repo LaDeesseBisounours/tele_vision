@@ -75,8 +75,10 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
     nbLoop++;
     printf("loop nb %zu\n", nbLoop);
 #endif
-    for (unsigned k = 0; k < NB_CENTER; ++k)
+    for (unsigned k = 0; k < NB_CENTER; ++k) {
       centers[k].nb = 0;
+      memset(&centers[k].tmp, 0, 5 * sizeof(unsigned long));
+    }
     for(unsigned long index = 0; index < nbTotalPixels; ++index) { //step 3
       for (unsigned k = 0; k < NB_CENTER; ++k) {
         centers[k].diff = 0;
@@ -88,13 +90,9 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
       unsigned classIndex = minDiff(centers);
       centers[classIndex].nb++;
       classSelection[index] = classIndex;
-    }
-    //step 4
-    for (unsigned k = 0; k < NB_CENTER; ++k)
-      memset(&centers[k].tmp, 0, 5 * sizeof(unsigned long));
-    for (unsigned long i = 0; i < nbTotalPixels; i++) {
+      //compressing more code in one loop
       for (unsigned k = 0; k < 5; ++k)
-        centers[classSelection[i]].tmp[k] += pixels[i][k];
+        centers[classIndex].tmp[k] += pixels[index][k];
     }
 
     for (unsigned k = 0; k < NB_CENTER; ++k) {
@@ -144,20 +142,22 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
   printf("le pourcentage de nuages est : %f%%\n", f * 100);
   printf("le pourcentage de nuages est : %f%%\n", f2 * 100);
 
-#ifdef DEBUG_MODE
-  for (unsigned i = 0; i < nbTotalPixels; i++) {
-    if (classSelection[i] == CLOUD_CENTER_INDEX) {
-      pucImaRes[i * 3] = 255;
-      pucImaRes[i * 3 + 1] = 0;
-      pucImaRes[i * 3 + 2] = 0;
-    }
-    if (classSelection[i] == 1) {
-      pucImaRes[i * 3] = 0;
-      pucImaRes[i * 3 + 1] = 255;
-      pucImaRes[i * 3 + 2] = 0;
+  if (visualMode) {
+    for (unsigned i = 0; i < nbTotalPixels; i++) {
+      if (classSelection[i] == CLOUD_CENTER_INDEX) {
+        pucImaRes[i * 3] = 255;
+        pucImaRes[i * 3 + 1] = 0;
+        pucImaRes[i * 3 + 2] = 0;
+      }
+      if (classSelection[i] == 1) {
+        pucImaRes[i * 3] = 0;
+        pucImaRes[i * 3 + 1] = 255;
+        pucImaRes[i * 3 + 2] = 0;
+      }
     }
   }
-#endif
+  for (unsigned long k= 0; k < nbTotalPixels; ++k)
+    free(pixels[k]);
   free(pixels);
   free(classSelection);
   clock_t t2 = clock();

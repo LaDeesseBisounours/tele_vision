@@ -3,12 +3,10 @@
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
-#include "compute.h"
+#include "compute_auto.h"
 #include "misc.h"
 
 int main(void) {
-  GtkWidget **ppwTabArgs;
-  GtkFileSelection *pfsOpenFile;
   int NbCol, NbLine;
   guchar *pucImaOrig, *pucImaRes;
   GdkPixbuf *pGdkPixbufIma;
@@ -25,7 +23,6 @@ int main(void) {
       exit(0);
     }
 
-    //pcFileName = (gchar*) gtk_file_selection_get_filename(pfsOpenFile);
     NbCol = gdk_pixbuf_get_width(pGdkPixbufIma); 
     NbLine = gdk_pixbuf_get_height(pGdkPixbufIma);
     pucImaOrig = gdk_pixbuf_get_pixels(pGdkPixbufIma);
@@ -33,5 +30,7 @@ int main(void) {
     pucImaRes = gdk_pixbuf_get_pixels(pGdkPixbufIma);
     ComputeImage(pucImaOrig, NbLine, NbCol, pucImaRes);
     free(pcFileName);
+    GdkPixbufDestroyNotify(pucImaOrig);
+    GdkPixbufDestroyNotify(pucImaRes);
   }
 }

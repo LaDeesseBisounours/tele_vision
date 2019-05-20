@@ -2,6 +2,8 @@
 #include<stdlib.h>
 #include"misc.h"
 
+int visualMode = 0;
+
 unsigned char*
 getNeighborList(struct packedPixel* tab, int index, int height, int width) {
   unsigned char* res = calloc(5, sizeof(unsigned char));
@@ -64,7 +66,7 @@ char *listPictures() {
       char *tmp = dir->d_name;
       size_t size = strlen(dir->d_name);
       char *new = calloc(1, size + 1);
-      strncpy(new, tmp, strlen(tmp));
+      strcpy(new, tmp);
 
       if (size > 4 && !strncmp(new + size - 4, ".bmp", 4))
         return new;

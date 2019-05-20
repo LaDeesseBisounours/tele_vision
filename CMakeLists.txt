@@ -1,6 +1,8 @@
 cmake_minimum_required( VERSION 2.8 )
 add_definitions( ${GTK2_CFLAGS_OTHER} )
 project( nuagesDetection )
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS "-g")
 find_package(PkgConfig REQUIRED)
 PKG_CHECK_MODULES(GTK2 REQUIRED gtk+-2.0)
 include_directories( ${GTK2_INCLUDE_DIRS} )

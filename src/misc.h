@@ -1,6 +1,8 @@
 #include <dirent.h>
 #include <string.h>
 
+extern int visualMode;
+
 struct packedPixel{
   unsigned char a1;
   unsigned char a2;
