@@ -1,0 +1,7 @@
+Compile:
+  mkdir build
+  cd build
+  Normal version:
+    cmake ..
+  Optimized version:
+    cmake -DCMAKE_BUILD_TYPE=Release
