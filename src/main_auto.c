@@ -5,9 +5,11 @@
 #include <math.h>
 #include "compute_auto.h"
 #include "misc.h"
+#include "threads.h"
 
 int main(void) {
   int NbCol, NbLine;
+  threadPool_init();
   guchar *pucImaOrig, *pucImaRes;
   GdkPixbuf *pGdkPixbufIma;
 
@@ -33,4 +35,5 @@ int main(void) {
     GdkPixbufDestroyNotify(pucImaOrig);
     GdkPixbufDestroyNotify(pucImaRes);
   }
+  threadPool_destroy();
 }

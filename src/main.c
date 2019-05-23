@@ -3,6 +3,7 @@
 #include <gtk/gtk.h>
 #include <math.h>
 #include "compute.h"
+#include "threads.h"
 #include "misc.h"
 #define DEBUG_MODE
 
@@ -141,6 +142,7 @@ fonction principale
 int main (int argc, char **argv)
 {
   visualMode = 1;
+  threadPool_init();
 
   /*---------------------------------------------
     Declarations
@@ -339,6 +341,7 @@ int main (int argc, char **argv)
   ----------------*/
   gtk_widget_show_all(pwMainWind);
   gtk_main();
+  threadPool_destroy();
   return(0);
 
 } 

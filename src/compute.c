@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 #include "misc.h"
+#include "threads.h"
 #include <time.h>
 #include <string.h>
 
