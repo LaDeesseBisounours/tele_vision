@@ -3,6 +3,7 @@
 #include "misc.h"
 #include <time.h>
 #include <string.h>
+#include <omp.h>
 
 #define NB_CENTER 6
 #define CLOUD_CENTER_INDEX 0
@@ -10,17 +11,6 @@
 unsigned long
 square(unsigned long n) {
   return n * n;
-}
-#ifdef DEBUG_MODE
-#endif
-
-unsigned minDiff(struct gravityCenter centers[]){
-  unsigned min = 0;
-  for (unsigned k = 1; k < NB_CENTER; ++k) {
-    if (centers[min].diff > centers[k].diff)
-      min = k;
-  }
-  return min;
 }
 
 void printCenters(struct gravityCenter centers[]) {
@@ -35,14 +25,13 @@ void printCenters(struct gravityCenter centers[]) {
 
 void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
   clock_t t1 = clock();
-  printf("starting analyse\n");
   unsigned long nbTotalPixels = (unsigned long)NbLine * NbCol;
   char *classSelection = calloc(nbTotalPixels, sizeof(char));
   unsigned char** pixels = calloc(nbTotalPixels, sizeof(char *));
 
   if (classSelection == NULL || pixels == NULL)
     return;
-
+#pragma omp for
   for (int k = 0; k < nbTotalPixels; ++k) {
     pixels[k] = getNeighborList((void*)pucImaRes, k, NbLine, NbCol);
   }
@@ -53,7 +42,7 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
 
   unsigned maxGround = 200;
   unsigned diff = maxGround / (NB_CENTER - 1);
-
+#pragma omp for
   for (unsigned k = 0; k < NB_CENTER; ++k) {
     if (k == CLOUD_CENTER_INDEX)
       continue;
@@ -64,43 +53,52 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
 
 #ifdef DEBUG_MODE
   printCenters(centers);
-#endif
-
-  char centersChanged = 1;
-#ifdef DEBUG_MODE
   unsigned long nbLoop = 0;
 #endif
+  char centersChanged = 1;
   while (centersChanged) {
 #ifdef DEBUG_MODE
     nbLoop++;
     printf("loop nb %zu\n", nbLoop);
 #endif
+#pragma omp for
     for (unsigned k = 0; k < NB_CENTER; ++k) {
       centers[k].nb = 0;
       memset(&centers[k].tmp, 0, 5 * sizeof(unsigned long));
     }
+#pragma omp for
     for(unsigned long index = 0; index < nbTotalPixels; ++index) { //step 3
+      unsigned classIndex = 0;
+      unsigned long old_diff = 0;
+#pragma omp for
       for (unsigned k = 0; k < NB_CENTER; ++k) {
-        centers[k].diff = 0;
+        unsigned long diff = 0;
         for (int i = 0; i < 5; i++) {
-          centers[k].diff +=
+          diff +=
             square((unsigned long)pixels[index][i] - centers[k].curr[i]);
         }
+        if (diff < old_diff || k == 0){
+          classIndex = k;
+          old_diff = diff;
+        }
       }
-      unsigned classIndex = minDiff(centers);
-      centers[classIndex].nb++;
       classSelection[index] = classIndex;
-      //compressing more code in one loop
-      for (unsigned k = 0; k < 5; ++k)
-        centers[classIndex].tmp[k] += pixels[index][k];
+      #pragma omp critical
+      {
+        centers[classIndex].nb++;
+        for (unsigned k = 0; k < 5; ++k)
+          centers[classIndex].tmp[k] += pixels[index][k];
+      }
     }
-
+#pragma omp for
     for (unsigned k = 0; k < NB_CENTER; ++k) {
       for (unsigned j = 0; j < 5; ++j) {
         if ( centers[k].nb != 0)
           centers[k].tmp[j] /= centers[k].nb;
         else {
-          printf("center %u empty", k);
+          #ifdef DEBUG_MODE
+          printf("center %u empty\n", k);
+          #endif
           centers[k].tmp[j] = centers[k].curr[j];
         }
       }
@@ -111,8 +109,6 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
       med = centers[CLOUD_CENTER_INDEX].curr[0];
     for (unsigned k = 0; k < 5; ++k)
       centers[CLOUD_CENTER_INDEX].tmp[k] = med;
-
-
 
     centersChanged = 0;
 
@@ -125,7 +121,7 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
       }
     }
 
-
+#pragma omp for
     for (int k = 0; k < NB_CENTER; k++) {
       for (int j = 0; j < 5; j++) {
         centers[k].curr[j] = (char)centers[k].tmp[j];
@@ -135,14 +131,19 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
     printCenters(centers);
 #endif
   }
+#ifdef DEBUG_MODE
   printf("number ground1 %zu on %zu\n", centers[1].nb, nbTotalPixels);
   printf("number cloud %zu on %zu\n", centers[CLOUD_CENTER_INDEX].nb, nbTotalPixels);
+#endif
   float f = (float)centers[CLOUD_CENTER_INDEX].nb / (float)nbTotalPixels;
-  float f2 = (float)(centers[1].nb + centers[CLOUD_CENTER_INDEX].nb) / (float)nbTotalPixels;
   printf("le pourcentage de nuages est : %f%%\n", f * 100);
+#ifdef DEBUG_MODE
+  float f2 = (float)(centers[1].nb + centers[CLOUD_CENTER_INDEX].nb) / (float)nbTotalPixels;
   printf("le pourcentage de nuages est : %f%%\n", f2 * 100);
+#endif
 
   if (visualMode) {
+#pragma omp for
     for (unsigned i = 0; i < nbTotalPixels; i++) {
       if (classSelection[i] == CLOUD_CENTER_INDEX) {
         pucImaRes[i * 3] = 255;
@@ -156,6 +157,7 @@ void analyse(guchar *pucImaRes, int NbLine, int NbCol) {
       }
     }
   }
+#pragma omp for
   for (unsigned long k= 0; k < nbTotalPixels; ++k)
     free(pixels[k]);
   free(pixels);
@@ -202,8 +204,9 @@ void ComputeImage(guchar *pucImaOrig,
   guchar ucMeanPix;
 
   printf("Segmentation de l'image.... A vous!\n");
-  
+
   iNbPixelsTotal=NbCol*NbLine;
+  #pragma omp for
   for(iNumPix=0;
       iNumPix<iNbPixelsTotal*iNbChannels;
       iNumPix=iNumPix+iNbChannels){
