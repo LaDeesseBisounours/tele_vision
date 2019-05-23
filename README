@@ -1,7 +1,13 @@
-Compile:
+Projet de traitement d'image satellitale
+
+Auteurs : Hamdi Abdallah, Maxime Mehio
+
+Pour compiler creer un dossier build :
   mkdir build
   cd build
-  Normal version:
-    cmake ..
-  Optimized version:
-    cmake -DCMAKE_BUILD_TYPE=Release
+
+Ensuite pour compiler une version non-optimiser du projet
+  cmake ..
+
+Ou Pour compiler une version optimiser du projet
+  cmake -DCMAKE_BUILD_TYPE=Release
